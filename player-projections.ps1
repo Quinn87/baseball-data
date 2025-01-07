@@ -7,12 +7,36 @@ function Get-PlayerInfo {
     }
 }
 
-$availableBattersPlusMe = Import-Csv -Path 'C:\users\shatt\Downloads\fantrax\Batters-Available+Me.csv'
-$availableStartersPlusMe = Import-Csv -Path 'C:\users\shatt\Downloads\fantrax\Starters-Available+Me.csv'
-$availableRelieversPlusMe = Import-Csv -Path 'C:\users\shatt\Downloads\fantrax\Relievers-Available+Me.csv'
+function Build-Database {
+    param (
+        $fantraxPlayerDatabase,
+        $batters,
+        $pitchers
+    )
+    foreach ($player in $fantraxPlayerDatabase) {
+        switch -Wildcard ($player.Position) {
+            "*P*" { $position = "pitcher" }
+            Default { $position = "batter" }
+        }
+
+        if ($position -eq "pitcher"){
+
+        }
+        else {
+            <# Action when all if and elseif conditions are false #>
+        }
+
+        $fanGraphsPlayer = $position | Where-Object {$_.PlayerName -eq $player.Player}
+        
+        [PSCustomObject]$PSplayerData = @{
+            Name = $player.Player
+        }
+    }
+}
 
 #all players
-$allPlayers
+$fantraxPlayerDatabase = Import-Csv -Path '.\import\Fantrax-Players-Dynasty Year 3.csv'
+$myTeam = $fantraxPlayerDatabase | Where-Object { $_.Status -eq "BQ" }
 
 #batters
 $battersUrl = 'https://www.fangraphs.com/api/projections?type=steamer&stats=bat&pos=all'
