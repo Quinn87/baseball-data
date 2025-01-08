@@ -29,6 +29,11 @@ function Build-Database {
 
         if ($position -eq "pitcher") {
             $fanGraphsPlayer = $pitchers | Where-Object { $_.PlayerName -eq $player.Player }
+            [PSCustomObject]$fgData = @{
+                Wins       = $fanGraphsPlayer.W
+                'K/bb+K/9' = $fanGraphsPlayer."K/BB" + $fanGraphsPlayer."K/9"
+
+            }
             
         }
         else {
