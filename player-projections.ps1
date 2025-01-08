@@ -50,7 +50,3 @@ $batters = Invoke-RestMethod -Uri $battersUrl -Method Get
 #pitchers
 $pitchersUrl = 'https://www.fangraphs.com/api/projections?type=steamer&stats=pit&pos=all'
 $pitchers = Invoke-RestMethod -Uri $pitchersUrl -Method Get
-
-foreach ($player in $players) {
-    $batters | Where-Object { $_.PlayerName -eq $player } | Select-Object PlayerName
-}
