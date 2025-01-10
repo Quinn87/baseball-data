@@ -1,57 +1,70 @@
 function Get-PlayerInfo {
     param (
-        [array]$players
+        $player
     )
-    foreach ($player in $players) {
-        $batters | Where-Object { $_.PlayerName -eq $player.Player }
+    switch -Wildcard ($player.Position) {
+        "*P*" { $position = "pitcher" }
+        Default { $position = "batter" }
     }
+
+    $baseData = @{
+        "Name"        = $player.Player
+        "Position"    = $player.Position
+        "MLBTeam"     = $player.Team
+        "fantasyTeam" = $player.Status
+        "Age"         = $player.Age
+    }
+
+    if ($position -eq "pitcher") {
+        Write-Host "$($player.player) is a pitcher"
+        $fanGraphsPlayer = $pitchers | Where-Object { $_.PlayerName -eq $player.Player }
+        
+        $pitcherData = @{
+            "K-BB%"     = $fanGraphsPlayer."K-BB%"
+            "IP"          = $fanGraphsPlayer.IP
+            "ERA"         = $fanGraphsPlayer.ERA
+            "WHIP"        = $fanGraphsPlayer.WHIP
+        }
+
+        $playerData = $baseData + $pitcherData
+    }
+    else {
+        Write-Host "$($player.player) is a batter"
+        $fanGraphsPlayer = $batters | Where-Object { $_.PlayerName -eq $player.Player }
+
+        $stolenBasePercentage = ($fanGraphsPlayer.SB/($fanGraphsPlayer.SB + $fanGraphsPlayer.CS)) * 100
+
+        $batterData = @{
+            "OPS" = $fanGraphsPlayer.OPS
+            "K%" = $fanGraphsPlayer."K%"
+            "BB%"= $fanGraphsPlayer."BB%"
+            "Runs" = $fanGraphsPlayer.Runs
+            "RBI" = $fanGraphsPlayer.RBI
+            "SB%" = $stolenBasePercentage
+            "OBP" = $fanGraphsPlayer.OBP
+            "SLG" = $fanGraphsPlayer.SLG
+        }
+        $playerData = $baseData + $batterData
+    }
+    return New-Object PSObject -Property $playerData
 }
 
-function Build-Database {
-    param (
-        $fantraxPlayerDatabase,
-        $batters,
-        $pitchers
-    )
-    foreach ($player in $fantraxPlayerDatabase) {
-        [PSCustomObject]$playerData = @{
-            Name        = $player.Player
-            Position    = $player.Position
-            MLBTeam     = $player.Team
-            fantasyTeam = $player.Status
-            Age         = $player.Age
-        }
+#imported file
+$playerImport = Import-Csv -Path '.\import\Fantrax-Players-Dynasty Year 3.csv'
 
-        switch -Wildcard ($player.Position) {
-            "*P*" { $position = "pitcher" }
-            Default { $position = "batter" }
-        }
-
-        if ($position -eq "pitcher") {
-            $fanGraphsPlayer = $pitchers | Where-Object { $_.PlayerName -eq $player.Player }
-            [PSCustomObject]$fgData = @{
-                Wins       = $fanGraphsPlayer.W
-                'K/bb+K/9' = $fanGraphsPlayer."K/BB" + $fanGraphsPlayer."K/9"
-
-            }
-            
-        }
-        else {
-            $fanGraphsPlayer = $batters | Where-Object { $_.PlayerName -eq $player.Player }
-        }
-
-        $fanGraphsPlayer = $position | Where-Object { $_.PlayerName -eq $player.Player }
-    }
-}
-
-#all players
-$fantraxPlayerDatabase = Import-Csv -Path '.\import\Fantrax-Players-Dynasty Year 3.csv'
-$myTeam = $fantraxPlayerDatabase | Where-Object { $_.Status -eq "BQ" }
-
-#batters
+#fantrax batters
 $battersUrl = 'https://www.fangraphs.com/api/projections?type=steamer&stats=bat&pos=all'
 $batters = Invoke-RestMethod -Uri $battersUrl -Method Get
 
-#pitchers
+#fantrax pitchers
 $pitchersUrl = 'https://www.fangraphs.com/api/projections?type=steamer&stats=pit&pos=all'
 $pitchers = Invoke-RestMethod -Uri $pitchersUrl -Method Get
+
+$mlbPlayers = [System.Collections.Generic.List[object]]::new()
+
+foreach ($player in $playerImport) {
+    $fgPlayer = Get-PlayerInfo $player
+    $mlbPlayers.Add($fgPlayer)
+}
+
+$mlbPlayers | Select-Object Name,Position,MLBTeam,fantasyTeam,Age | ft
