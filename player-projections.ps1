@@ -28,7 +28,7 @@ param (
 
     [Parameter(Mandatory = $true, HelpMessage = "Provide the path of the import file.")]
     [ValidateNotNullOrEmpty()]
-    [string]$playerImport
+    [string]$playerImportFileLocation
 )
 
 begin {
@@ -71,25 +71,20 @@ begin {
         param (
             $player
         )
-        switch -Wildcard ($player.Position) {
-            "*P*" { $position = "pitcher" }
-            Default { $position = "batter" }
-        }
     
         $baseData = @{
             "Name"        = $player.Player
             "Position"    = $player.Position
             "MLBTeam"     = $player.Team
-            "fantasyTeam" = $player.Status
+            "FantasyTeam" = $player.Status
             "Age"         = $player.Age
         }
     
         if ($position -eq "pitcher") {
-            Write-Host "$($player.player) is a pitcher"
             $fanGraphsPlayer = $pitchers | Where-Object { $_.PlayerName -eq $player.Player }
             
             $pitcherData = @{
-                "K-BB%" = $fanGraphsPlayer."K-BB%"
+                "K/BB%" = $fanGraphsPlayer."K-BB%"
                 "IP"    = $fanGraphsPlayer.IP
                 "ERA"   = $fanGraphsPlayer.ERA
                 "WHIP"  = $fanGraphsPlayer.WHIP
@@ -98,17 +93,16 @@ begin {
             $playerData = $baseData + $pitcherData
         }
         else {
-            Write-Host "$($player.player) is a batter"
             $fanGraphsPlayer = $batters | Where-Object { $_.PlayerName -eq $player.Player }
-    
-            $stolenBasePercentage = ($fanGraphsPlayer.SB / ($fanGraphsPlayer.SB + $fanGraphsPlayer.CS)) * 100
+
+            $stolenBasePercentage = ([int]$fanGraphsPlayer.SB / ([int]$fanGraphsPlayer.SB + [int]$fanGraphsPlayer.CS)) * 100
     
             $batterData = @{
                 "OPS"  = $fanGraphsPlayer.OPS
                 "K%"   = $fanGraphsPlayer."K%"
                 "BB%"  = $fanGraphsPlayer."BB%"
-                "Runs" = $fanGraphsPlayer.Runs
-                "RBI"  = $fanGraphsPlayer.RBI
+                "Runs" = $fanGraphsPlayer.R
+                "RBIs" = $fanGraphsPlayer.RBI
                 "SB%"  = $stolenBasePercentage
                 "OBP"  = $fanGraphsPlayer.OBP
                 "SLG"  = $fanGraphsPlayer.SLG
@@ -116,39 +110,46 @@ begin {
             $playerData = $baseData + $batterData
         }
         return New-Object PSObject -Property $playerData
+
+        $InformationPreference = 'Continue'
+
+        # Display the time that this script started running.
+        [DateTime] $startTime = Get-Date
+        Log-Information -Message "Starting script at '$($startTime.ToString('u'))'."
     }
-
-    $InformationPreference = 'Continue'
-
-    # Display the time that this script started running.
-    [DateTime] $startTime = Get-Date
-    Log-Information -Message "Starting script at '$($startTime.ToString('u'))'."
 }
 
 process {
     try {
         Log-Information -Message "Processing script code."
 
-        #fantrax batters
+        Write-Host "Pulling data from Fangraphs"
+        #fangraphs batters
         $battersUrl = 'https://www.fangraphs.com/api/projections?type=steamer&stats=bat&pos=all'
         $batters = Invoke-RestMethod -Uri $battersUrl -Method Get
 
-        #fantrax pitchers
+        #fangraphs pitchers
         $pitchersUrl = 'https://www.fangraphs.com/api/projections?type=steamer&stats=pit&pos=all'
         $pitchers = Invoke-RestMethod -Uri $pitchersUrl -Method Get
 
         #imported file
-        $playerImport = Import-Csv -Path '.\import\Fantrax-Players-Dynasty Year 3.csv'
-        $mlbPlayers = [System.Collections.Generic.List[object]]::new()
+        $playerImport = Import-Csv $playerImportFileLocation
 
+        Write-Host "Processing $position file"
+        $playerCollection = [System.Collections.Generic.List[object]]::new()
         foreach ($player in $playerImport) {
-            $fgPlayer = Get-PlayerInfo $player
-            $mlbPlayers.Add($fgPlayer)
+            $playerInfo = Get-PlayerInfo $player
+            $playerCollection.Add($playerInfo)
         }
 
-        $mlbPlayers | Select-Object Name, Position, MLBTeam, fantasyTeam, Age | ft
-        
+        if ($position -eq "pitcher") {
+            $playerCollection | Select-Object Name, Position, MLBTeam, FantasyTeam, Age, "K/BB%", IP, ERA, WHIP | Export-Csv playerdata.csv -NoTypeInformation
+        }
+        else {
+            $playerCollection | Select-Object Name, Position, MLBTeam, FantasyTeam, Age, OPS, "K%", "BB%", Runs, RBIs, "SB%", OBP, SLG | Export-Csv playerdata.csv -NoTypeInformation
+        }
     }
+
     catch {
         Log-Error -Message $_.Exception.Message
     }
