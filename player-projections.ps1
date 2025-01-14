@@ -32,41 +32,12 @@ param (
 )
 
 begin {
-    # Start the log file as early as possible.
-    $logFilePath = "$PSCommandPath.LastRun.csv"
-    Add-Content -Path $logFilePath -Value "TimeStamp;ErrorType;ErrorMessage"
-
-    function Write-Log {
+    function Get-PlayerId {
         param (
-            [string]$ErrorType,
-            [string]$ErrorMessage
+            $player
         )
-        $timeStamp = (Get-Date).ToString('u')
-        $logEntry = "$timeStamp;$ErrorType;$ErrorMessage"
-        Add-Content -Path $logFilePath -Value $logEntry
+        ($playerMap | Where-Object { $_.FANTRAXID -eq $player.ID }).IDFANGRAPHS
     }
-
-    function Log-Information {
-        param (
-            [string]$Message
-        )
-        Write-Log -ErrorType "Information" -ErrorMessage $Message
-    }
-
-    function Log-Warning {
-        param (
-            [string]$Message
-        )
-        Write-Log -ErrorType "Warning" -ErrorMessage $Message
-    }
-
-    function Log-Error {
-        param (
-            [string]$Message
-        )
-        Write-Log -ErrorType "Error" -ErrorMessage $Message
-    }
-
     function Get-PlayerInfo {
         param (
             $player
@@ -110,27 +81,22 @@ begin {
             $playerData = $baseData + $batterData
         }
         return New-Object PSObject -Property $playerData
-
-        $InformationPreference = 'Continue'
-
-        # Display the time that this script started running.
-        [DateTime] $startTime = Get-Date
-        Log-Information -Message "Starting script at '$($startTime.ToString('u'))'."
     }
 }
 
 process {
     try {
-        Log-Information -Message "Processing script code."
-
         Write-Host "Pulling data from Fangraphs"
         #fangraphs batters
         $battersUrl = 'https://www.fangraphs.com/api/projections?type=steamer&stats=bat&pos=all'
         $batters = Invoke-RestMethod -Uri $battersUrl -Method Get
 
         #fangraphs pitchers
-        $pitchersUrl = 'https://www.fangraphs.com/api/projections?type=steamer&stats=pit&pos=all'
+        $pitchersUrl = 'https://www.fangraphs.com/api/projections?type=steamer&stats=pit&pos=all&team=0&players=0&lg=all&z=1736762720'
         $pitchers = Invoke-RestMethod -Uri $pitchersUrl -Method Get
+
+        #playerMap
+        $playerMap = Import-Csv -Path playerMap.csv
 
         #imported file
         $playerImport = Import-Csv $playerImportFileLocation
@@ -153,11 +119,4 @@ process {
     catch {
         Log-Error -Message $_.Exception.Message
     }
-}
-
-end {
-    # Display the time that this script finished running, and how long it took to run.
-    [DateTime] $finishTime = Get-Date
-    [TimeSpan] $elapsedTime = $finishTime - $startTime
-    Log-Information -Message "Finished script at '$($finishTime.ToString('u'))'. Took '$elapsedTime' to run."
 }
