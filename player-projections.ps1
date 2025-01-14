@@ -36,11 +36,13 @@ begin {
         param (
             $player
         )
-        ($playerMap | Where-Object { $_.FANTRAXID -eq $player.ID }).IDFANGRAPHS
+        $fanGraphsPlayerID = ($playerMap | Where-Object { $_.FANTRAXID -eq $player.ID }).IDFANGRAPHS
+        return $fanGraphsPlayerID
     }
     function Get-PlayerInfo {
         param (
-            $player
+            $player,
+            $playerId
         )
     
         $baseData = @{
@@ -52,7 +54,7 @@ begin {
         }
     
         if ($position -eq "pitcher") {
-            $fanGraphsPlayer = $pitchers | Where-Object { $_.PlayerName -eq $player.Player }
+            $fanGraphsPlayer = $pitchers | Where-Object { $_.playerid -eq $playerId }
             
             $pitcherData = @{
                 "K/BB%" = $fanGraphsPlayer."K-BB%"
@@ -64,7 +66,7 @@ begin {
             $playerData = $baseData + $pitcherData
         }
         else {
-            $fanGraphsPlayer = $batters | Where-Object { $_.PlayerName -eq $player.Player }
+            $fanGraphsPlayer = $batters | Where-Object { $_.playerid -eq $playerId }
 
             $stolenBasePercentage = ([int]$fanGraphsPlayer.SB / ([int]$fanGraphsPlayer.SB + [int]$fanGraphsPlayer.CS)) * 100
     
@@ -92,7 +94,7 @@ process {
         $batters = Invoke-RestMethod -Uri $battersUrl -Method Get
 
         #fangraphs pitchers
-        $pitchersUrl = 'https://www.fangraphs.com/api/projections?type=steamer&stats=pit&pos=all&team=0&players=0&lg=all&z=1736762720'
+        $pitchersUrl = 'https://www.fangraphs.com/api/projections?type=steamer&stats=pit&pos=all'
         $pitchers = Invoke-RestMethod -Uri $pitchersUrl -Method Get
 
         #playerMap
@@ -104,19 +106,21 @@ process {
         Write-Host "Processing $position file"
         $playerCollection = [System.Collections.Generic.List[object]]::new()
         foreach ($player in $playerImport) {
-            $playerInfo = Get-PlayerInfo $player
+            $playerId = Get-PlayerId $player
+            $playerInfo = Get-PlayerInfo $player $playerId
             $playerCollection.Add($playerInfo)
         }
 
+        Write-Host $position
+
         if ($position -eq "pitcher") {
-            $playerCollection | Select-Object Name, Position, MLBTeam, FantasyTeam, Age, "K/BB%", IP, ERA, WHIP | Export-Csv playerdata.csv -NoTypeInformation
+            $playerCollection | Select-Object Name, Position, MLBTeam, FantasyTeam, Age, "K/BB%", IP, ERA, WHIP | Sort-Object "K/BB%" -Descending | Export-Csv ./output/pitcher-data.csv -NoTypeInformation
         }
         else {
-            $playerCollection | Select-Object Name, Position, MLBTeam, FantasyTeam, Age, OPS, "K%", "BB%", Runs, RBIs, "SB%", OBP, SLG | Export-Csv playerdata.csv -NoTypeInformation
+            $playerCollection | Select-Object Name, Position, MLBTeam, FantasyTeam, Age, OPS, "K%", "BB%", Runs, RBIs, "SB%", OBP, SLG | Sort-Object OBP | Export-Csv ./output/batter-data.csv -NoTypeInformation
         }
     }
-
     catch {
-        Log-Error -Message $_.Exception.Message
+        $_.Exception.Message
     }
 }
