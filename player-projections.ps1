@@ -68,15 +68,15 @@ begin {
         else {
             $fanGraphsPlayer = $batters | Where-Object { $_.playerid -eq $playerId }
 
-            $stolenBasePercentage = ([int]$fanGraphsPlayer.SB / ([int]$fanGraphsPlayer.SB + [int]$fanGraphsPlayer.CS)) * 100
-    
             $batterData = @{
                 "OPS"  = $fanGraphsPlayer.OPS
+                "PA"   = $fanGraphsPlayer.PA
                 "K%"   = $fanGraphsPlayer."K%"
                 "BB%"  = $fanGraphsPlayer."BB%"
                 "Runs" = $fanGraphsPlayer.R
                 "RBIs" = $fanGraphsPlayer.RBI
-                "SB%"  = $stolenBasePercentage
+                "SB"   = $fanGraphsPlayer.SB
+                "CS"   = $fanGraphsPlayer.CS
                 "OBP"  = $fanGraphsPlayer.OBP
                 "SLG"  = $fanGraphsPlayer.SLG
             }
@@ -111,13 +111,11 @@ process {
             $playerCollection.Add($playerInfo)
         }
 
-        Write-Host $position
-
         if ($position -eq "pitcher") {
             $playerCollection | Select-Object Name, Position, MLBTeam, FantasyTeam, Age, "K/BB%", IP, ERA, WHIP | Sort-Object "K/BB%" -Descending | Export-Csv ./output/pitcher-data.csv -NoTypeInformation
         }
         else {
-            $playerCollection | Select-Object Name, Position, MLBTeam, FantasyTeam, Age, OPS, "K%", "BB%", Runs, RBIs, "SB%", OBP, SLG | Sort-Object OBP | Export-Csv ./output/batter-data.csv -NoTypeInformation
+            $playerCollection | Select-Object Name, Position, MLBTeam, FantasyTeam, Age, OPS, PA, "K%", "BB%", Runs, RBIs, SB, OBP, SLG | Sort-Object OBP | Export-Csv ./output/batter-data.csv -NoTypeInformation
         }
     }
     catch {
