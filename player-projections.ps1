@@ -20,6 +20,9 @@
     Additional information about the script.
 #>
 
+# TODO: 
+# - Add parameter for Team name. Use the Team name to name the outputted file. 
+
 [CmdletBinding()]
 param (
     [Parameter(Mandatory = $true, HelpMessage = "Provide the player position.")]
