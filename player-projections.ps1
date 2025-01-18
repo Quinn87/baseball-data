@@ -22,11 +22,12 @@
 
 [CmdletBinding()]
 param (
-    [Parameter(Mandatory = $true, HelpMessage = "Provide the player position.")]
+    [Parameter(Mandatory = $true, HelpMessage = "Provide the player position: Pitcher or Batter")]
     [ValidateNotNullOrEmpty()]
+    [ValidateSet("Pitcher", "Batter")]
     [string]$position,
 
-    [Parameter(Mandatory = $true, HelpMessage = "Provide the path of the import file.")]
+    [Parameter(Mandatory = $true, HelpMessage = "Provide the path of the CSV.")]
     [ValidateNotNullOrEmpty()]
     [string]$playerImportFileLocation
 )
@@ -133,7 +134,13 @@ process {
         $pitchers = Invoke-RestMethod -Uri $pitchersUrl -Method Get
 
         #imported file
-        $playerImport = Import-Csv $playerImportFileLocation
+        if ($playerImportFileLocation -like "*.csv") {
+            $playerImport = Import-Csv $playerImportFileLocation
+        }
+        else {
+            Log-Error "File type must be a CSV"
+            Write-Output "File type must be a CSV"
+        }
 
         Write-Host "Processing $position file"
         $playerCollection = [System.Collections.Generic.List[object]]::new()
