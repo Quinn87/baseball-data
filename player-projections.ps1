@@ -20,6 +20,9 @@
     Additional information about the script.
 #>
 
+# TODO: 
+# - Add parameter for Team name. Use the Team name to name the outputted file. 
+
 [CmdletBinding()]
 param (
     [Parameter(Mandatory = $true, HelpMessage = "Provide the player position: Pitcher or Batter")]
@@ -33,44 +36,17 @@ param (
 )
 
 begin {
-    # Start the log file as early as possible.
-    $logFilePath = "$PSCommandPath.LastRun.csv"
-    Add-Content -Path $logFilePath -Value "TimeStamp;ErrorType;ErrorMessage"
-
-    function Write-Log {
-        param (
-            [string]$ErrorType,
-            [string]$ErrorMessage
-        )
-        $timeStamp = (Get-Date).ToString('u')
-        $logEntry = "$timeStamp;$ErrorType;$ErrorMessage"
-        Add-Content -Path $logFilePath -Value $logEntry
-    }
-
-    function Log-Information {
-        param (
-            [string]$Message
-        )
-        Write-Log -ErrorType "Information" -ErrorMessage $Message
-    }
-
-    function Log-Warning {
-        param (
-            [string]$Message
-        )
-        Write-Log -ErrorType "Warning" -ErrorMessage $Message
-    }
-
-    function Log-Error {
-        param (
-            [string]$Message
-        )
-        Write-Log -ErrorType "Error" -ErrorMessage $Message
-    }
-
-    function Get-PlayerInfo {
+    function Get-PlayerId {
         param (
             $player
+        )
+        $fanGraphsPlayerID = ($playerMap | Where-Object { $_.FANTRAXID -eq $player.ID }).IDFANGRAPHS
+        return $fanGraphsPlayerID
+    }
+    function Get-PlayerInfo {
+        param (
+            $player,
+            $playerId
         )
     
         $baseData = @{
@@ -82,7 +58,7 @@ begin {
         }
     
         if ($position -eq "pitcher") {
-            $fanGraphsPlayer = $pitchers | Where-Object { $_.PlayerName -eq $player.Player }
+            $fanGraphsPlayer = $pitchers | Where-Object { $_.playerid -eq $playerId }
             
             $pitcherData = @{
                 "K/BB%" = $fanGraphsPlayer."K-BB%"
@@ -94,36 +70,28 @@ begin {
             $playerData = $baseData + $pitcherData
         }
         else {
-            $fanGraphsPlayer = $batters | Where-Object { $_.PlayerName -eq $player.Player }
+            $fanGraphsPlayer = $batters | Where-Object { $_.playerid -eq $playerId }
 
-            $stolenBasePercentage = ([int]$fanGraphsPlayer.SB / ([int]$fanGraphsPlayer.SB + [int]$fanGraphsPlayer.CS)) * 100
-    
             $batterData = @{
                 "OPS"  = $fanGraphsPlayer.OPS
+                "PA"   = $fanGraphsPlayer.PA
                 "K%"   = $fanGraphsPlayer."K%"
                 "BB%"  = $fanGraphsPlayer."BB%"
                 "Runs" = $fanGraphsPlayer.R
                 "RBIs" = $fanGraphsPlayer.RBI
-                "SB%"  = $stolenBasePercentage
+                "SB"   = $fanGraphsPlayer.SB
+                "CS"   = $fanGraphsPlayer.CS
                 "OBP"  = $fanGraphsPlayer.OBP
                 "SLG"  = $fanGraphsPlayer.SLG
             }
             $playerData = $baseData + $batterData
         }
         return New-Object PSObject -Property $playerData
-
-        $InformationPreference = 'Continue'
-
-        # Display the time that this script started running.
-        [DateTime] $startTime = Get-Date
-        Log-Information -Message "Starting script at '$($startTime.ToString('u'))'."
     }
 }
 
 process {
     try {
-        Log-Information -Message "Processing script code."
-
         Write-Host "Pulling data from Fangraphs"
         #fangraphs batters
         $battersUrl = 'https://www.fangraphs.com/api/projections?type=steamer&stats=bat&pos=all'
@@ -132,6 +100,9 @@ process {
         #fangraphs pitchers
         $pitchersUrl = 'https://www.fangraphs.com/api/projections?type=steamer&stats=pit&pos=all'
         $pitchers = Invoke-RestMethod -Uri $pitchersUrl -Method Get
+
+        #playerMap
+        $playerMap = Import-Csv -Path playerMap.csv
 
         #imported file
         if ($playerImportFileLocation -like "*.csv") {
@@ -145,26 +116,19 @@ process {
         Write-Host "Processing $position file"
         $playerCollection = [System.Collections.Generic.List[object]]::new()
         foreach ($player in $playerImport) {
-            $playerInfo = Get-PlayerInfo $player
+            $playerId = Get-PlayerId $player
+            $playerInfo = Get-PlayerInfo $player $playerId
             $playerCollection.Add($playerInfo)
         }
 
         if ($position -eq "pitcher") {
-            $playerCollection | Select-Object Name, Position, MLBTeam, FantasyTeam, Age, "K/BB%", IP, ERA, WHIP | Export-Csv playerdata.csv -NoTypeInformation
+            $playerCollection | Select-Object Name, Position, MLBTeam, FantasyTeam, Age, "K/BB%", IP, ERA, WHIP | Sort-Object "K/BB%" -Descending | Export-Csv ./output/pitcher-data.csv -NoTypeInformation
         }
         else {
-            $playerCollection | Select-Object Name, Position, MLBTeam, FantasyTeam, Age, OPS, "K%", "BB%", Runs, RBIs, "SB%", OBP, SLG | Export-Csv playerdata.csv -NoTypeInformation
+            $playerCollection | Select-Object Name, Position, MLBTeam, FantasyTeam, Age, OPS, PA, "K%", "BB%", Runs, RBIs, SB, OBP, SLG | Sort-Object OBP | Export-Csv ./output/batter-data.csv -NoTypeInformation
         }
     }
-
     catch {
-        Log-Error -Message $_.Exception.Message
+        $_.Exception.Message
     }
-}
-
-end {
-    # Display the time that this script finished running, and how long it took to run.
-    [DateTime] $finishTime = Get-Date
-    [TimeSpan] $elapsedTime = $finishTime - $startTime
-    Log-Information -Message "Finished script at '$($finishTime.ToString('u'))'. Took '$elapsedTime' to run."
 }
