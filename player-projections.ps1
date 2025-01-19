@@ -20,6 +20,10 @@
     Additional information about the script.
 #>
 
+# TODO: 
+# - Add parameter for Team name. Use the Team name to name the outputted file. 
+# - Add Rankings column
+
 [CmdletBinding()]
 param (
     [Parameter(Mandatory = $true, HelpMessage = "Provide the player position.")]
@@ -28,11 +32,7 @@ param (
 
     [Parameter(Mandatory = $true, HelpMessage = "Provide the path of the import file.")]
     [ValidateNotNullOrEmpty()]
-    [string]$playerImportFileLocation,
-
-    [Parameter(Mandatory = $true, HelpMessage = "Provide a name for the output file.")]
-    [ValidateNotNullOrEmpty()]
-    [string]$outputFileName
+    [string]$playerImportFileLocation
 )
 
 begin {
@@ -74,7 +74,6 @@ begin {
 
             $batterData = @{
                 "OPS"  = $fanGraphsPlayer.OPS
-                "Games" = $fanGraphsPlayer.G
                 "PA"   = $fanGraphsPlayer.PA
                 "K%"   = $fanGraphsPlayer."K%"
                 "BB%"  = $fanGraphsPlayer."BB%"
@@ -96,11 +95,11 @@ process {
         Write-Host "Pulling data from Fangraphs"
         #fangraphs batters
         $battersUrl = 'https://www.fangraphs.com/api/projections?type=steamer&stats=bat&pos=all'
-        $global:batters = Invoke-RestMethod -Uri $battersUrl -Method Get
+        $batters = Invoke-RestMethod -Uri $battersUrl -Method Get
 
         #fangraphs pitchers
         $pitchersUrl = 'https://www.fangraphs.com/api/projections?type=steamer&stats=pit&pos=all'
-        $global:pitchers = Invoke-RestMethod -Uri $pitchersUrl -Method Get
+        $pitchers = Invoke-RestMethod -Uri $pitchersUrl -Method Get
 
         #playerMap
         $playerMap = Import-Csv -Path playerMap.csv
@@ -117,10 +116,10 @@ process {
         }
 
         if ($position -eq "pitcher") {
-            $playerCollection | Select-Object Name, Position, MLBTeam, FantasyTeam, Age, "K/BB%", IP, ERA, WHIP | Sort-Object "K/BB%" -Descending | Export-Csv ./output/$outputFileName.csv -NoTypeInformation
+            $playerCollection | Select-Object Name, Position, MLBTeam, FantasyTeam, Age, "K/BB%", IP, ERA, WHIP | Sort-Object "K/BB%" -Descending | Export-Csv ./output/pitcher-data.csv -NoTypeInformation
         }
         else {
-            $playerCollection | Select-Object Name, Position, MLBTeam, FantasyTeam, Age, OPS, Games, PA, "K%", "BB%", Runs, RBIs, SB, OBP, SLG | Sort-Object OBP | Export-Csv ./output/$outputFileName.csv -NoTypeInformation
+            $playerCollection | Select-Object Name, Position, MLBTeam, FantasyTeam, Age, OPS, PA, "K%", "BB%", Runs, RBIs, SB, OBP, SLG | Sort-Object OBP | Export-Csv ./output/batter-data.csv -NoTypeInformation
         }
     }
     catch {
