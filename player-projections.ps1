@@ -20,10 +20,6 @@
     Additional information about the script.
 #>
 
-# TODO: 
-# - Add parameter for Team name. Use the Team name to name the outputted file. 
-# - Add Rankings column
-
 [CmdletBinding()]
 param (
     [Parameter(Mandatory = $true, HelpMessage = "Provide the player position: Pitcher or Batter")]
@@ -33,7 +29,11 @@ param (
 
     [Parameter(Mandatory = $true, HelpMessage = "Provide the path of the CSV.")]
     [ValidateNotNullOrEmpty()]
-    [string]$playerImportFileLocation
+    [string]$playerImportFileLocation,
+
+    [Parameter(Mandatory = $true, HelpMessage = "Provide the name of the outputted CSV.")]
+    [ValidateNotNullOrEmpty()]
+    [string]$outputFileName
 )
 
 begin {
@@ -76,6 +76,7 @@ begin {
             $batterData = @{
                 "OPS"  = $fanGraphsPlayer.OPS
                 "PA"   = $fanGraphsPlayer.PA
+                "Games" = $fanGraphsPlayer.G
                 "K%"   = $fanGraphsPlayer."K%"
                 "BB%"  = $fanGraphsPlayer."BB%"
                 "Runs" = $fanGraphsPlayer.R
@@ -123,10 +124,10 @@ process {
         }
 
         if ($position -eq "pitcher") {
-            $playerCollection | Select-Object Name, Position, MLBTeam, FantasyTeam, Age, "K/BB%", IP, ERA, WHIP | Sort-Object "K/BB%" -Descending | Export-Csv ./output/pitcher-data.csv -NoTypeInformation
+            $playerCollection | Select-Object Name, Position, MLBTeam, FantasyTeam, Age, "K/BB%", IP, ERA, WHIP | Sort-Object "K/BB%" -Descending | Export-Csv ./output/$outputFileName.csv -NoTypeInformation
         }
         else {
-            $playerCollection | Select-Object Name, Position, MLBTeam, FantasyTeam, Age, OPS, PA, "K%", "BB%", Runs, RBIs, SB, OBP, SLG | Sort-Object OBP | Export-Csv ./output/batter-data.csv -NoTypeInformation
+            $playerCollection | Select-Object Name, Position, MLBTeam, FantasyTeam, Age, OPS, PA, Games, "K%", "BB%", Runs, RBIs, SB, OBP, SLG | Sort-Object OBP | Export-Csv ./output/$outputFileName.csv -NoTypeInformation
         }
     }
     catch {
