@@ -27,6 +27,10 @@ param (
     [ValidateSet("Pitcher", "Batter")]
     [string]$position,
 
+    [Parameter(Mandatory = $true, HelpMessage = "How many player files will be imported?")]
+    [ValidateNotNullOrEmpty()]
+    [Int]$fileImportCount,
+
     [Parameter(Mandatory = $true, HelpMessage = "Provide the path of the CSV.")]
     [ValidateNotNullOrEmpty()]
     [string]$playerImportFileLocation,
@@ -37,6 +41,25 @@ param (
 )
 
 begin {
+    function Join-Files {
+        param (
+            $fileImportCount
+        )
+
+        if ($fileImportCount -ge 0) {
+
+            $filesToImport = [Collections.Generic.List[string]]::new()
+
+            for ($i = 1; $i -le $fileImportCount; $i++) {
+                do {
+                    $fileToImport = Read-Host "Provide path to CSV to upload for file number $i"
+                } while (
+                    $fileToImport -notlike "*.csv"
+                )
+                $filesToImport.Add($fileToImport)
+            }
+        }
+    }
     function Get-PlayerId {
         param (
             $player
@@ -74,17 +97,17 @@ begin {
             $fanGraphsPlayer = $batters | Where-Object { $_.playerid -eq $playerId }
 
             $batterData = @{
-                "OPS"  = $fanGraphsPlayer.OPS
-                "PA"   = $fanGraphsPlayer.PA
+                "OPS"   = $fanGraphsPlayer.OPS
+                "PA"    = $fanGraphsPlayer.PA
                 "Games" = $fanGraphsPlayer.G
-                "K%"   = $fanGraphsPlayer."K%"
-                "BB%"  = $fanGraphsPlayer."BB%"
-                "Runs" = $fanGraphsPlayer.R
-                "RBIs" = $fanGraphsPlayer.RBI
-                "SB"   = $fanGraphsPlayer.SB
-                "CS"   = $fanGraphsPlayer.CS
-                "OBP"  = $fanGraphsPlayer.OBP
-                "SLG"  = $fanGraphsPlayer.SLG
+                "K%"    = $fanGraphsPlayer."K%"
+                "BB%"   = $fanGraphsPlayer."BB%"
+                "Runs"  = $fanGraphsPlayer.R
+                "RBIs"  = $fanGraphsPlayer.RBI
+                "SB"    = $fanGraphsPlayer.SB
+                "CS"    = $fanGraphsPlayer.CS
+                "OBP"   = $fanGraphsPlayer.OBP
+                "SLG"   = $fanGraphsPlayer.SLG
             }
             $playerData = $baseData + $batterData
         }
