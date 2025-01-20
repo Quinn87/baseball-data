@@ -31,11 +31,7 @@ param (
     [ValidateNotNullOrEmpty()]
     [Int]$fileImportCount,
 
-    [Parameter(Mandatory = $true, HelpMessage = "Provide the path of the CSV.")]
-    [ValidateNotNullOrEmpty()]
-    [string]$playerImportFileLocation,
-
-    [Parameter(Mandatory = $true, HelpMessage = "Provide the name of the outputted CSV.")]
+    [Parameter(Mandatory = $true, HelpMessage = "Provide a name for the outputted CSV.")]
     [ValidateNotNullOrEmpty()]
     [string]$outputFileName
 )
@@ -65,7 +61,6 @@ begin {
         }
         return $playerList
     }
-
     function Get-PlayerId {
         param (
             $player
@@ -123,6 +118,9 @@ begin {
 
 process {
     try {
+
+        $playerImport = Join-Files $fileImportCount
+
         Write-Host "Pulling data from Fangraphs"
         #fangraphs batters
         $battersUrl = 'https://www.fangraphs.com/api/projections?type=steamer&stats=bat&pos=all'
@@ -134,15 +132,6 @@ process {
 
         #playerMap
         $playerMap = Import-Csv -Path playerMap.csv
-
-        #imported file
-        if ($playerImportFileLocation -like "*.csv") {
-            $playerImport = Import-Csv $playerImportFileLocation
-        }
-        else {
-            Log-Error "File type must be a CSV"
-            Write-Output "File type must be a CSV"
-        }
 
         Write-Host "Processing $position file"
         $playerCollection = [System.Collections.Generic.List[object]]::new()
@@ -156,7 +145,7 @@ process {
             $playerCollection | Select-Object Name, Position, MLBTeam, FantasyTeam, Age, "K/BB%", IP, ERA, WHIP | Sort-Object "K/BB%" -Descending | Export-Csv ./output/$outputFileName.csv -NoTypeInformation
         }
         else {
-            $playerCollection | Select-Object Name, Position, MLBTeam, FantasyTeam, Age, OPS, PA, Games, "K%", "BB%", Runs, RBIs, SB, OBP, SLG | Sort-Object OBP | Export-Csv ./output/$outputFileName.csv -NoTypeInformation
+            $playerCollection | Select-Object Name, Position, MLBTeam, FantasyTeam, Age, OPS, PA, Games, "K%", "BB%", Runs, RBIs, SB, OBP, SLG | Sort-Object OBP -Descending | Export-Csv ./output/$outputFileName.csv -NoTypeInformation
         }
     }
     catch {
