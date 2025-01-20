@@ -46,7 +46,7 @@ begin {
             $fileImportCount
         )
 
-        if ($fileImportCount -ge 0) {
+        if ($fileImportCount -gt 0) {
 
             $filesToImport = [Collections.Generic.List[string]]::new()
 
@@ -58,8 +58,14 @@ begin {
                 )
                 $filesToImport.Add($fileToImport)
             }
+
+            $playerList = foreach ($file in $filesToImport) { 
+                Import-Csv $file
+            }
         }
+        return $playerList
     }
+
     function Get-PlayerId {
         param (
             $player
