@@ -90,6 +90,10 @@ begin {
                 "IP"    = $fanGraphsPlayer.IP
                 "ERA"   = $fanGraphsPlayer.ERA
                 "WHIP"  = $fanGraphsPlayer.WHIP
+                "Wins" = $fanGraphsPlayer.W
+                "Loss" = $fanGraphsPlayer.L
+                "Saves" = $fanGraphsPlayer.SV
+                "Holds" = $fanGraphsPlayer.HLD
             }
     
             $playerData = $baseData + $pitcherData
