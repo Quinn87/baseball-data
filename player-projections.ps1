@@ -145,7 +145,7 @@ process {
             $playerCollection | Select-Object Name, Position, MLBTeam, FantasyTeam, Age, "K/BB%", IP, ERA, WHIP | Sort-Object "K/BB%" -Descending | Export-Csv ./output/$outputFileName.csv -NoTypeInformation
         }
         else {
-            $playerCollection | Select-Object Name, Position, MLBTeam, FantasyTeam, Age, OPS, PA, Games, "K%", "BB%", Runs, RBIs, SB, OBP, SLG | Sort-Object OBP -Descending | Export-Csv ./output/$outputFileName.csv -NoTypeInformation
+            $playerCollection | Select-Object Name, Position, MLBTeam, FantasyTeam, Age, OPS, PA, Games, "K%", "BB%", Runs, RBIs, SB, CS, OBP, SLG | Sort-Object OBP -Descending | Export-Csv ./output/$outputFileName.csv -NoTypeInformation
         }
     }
     catch {
