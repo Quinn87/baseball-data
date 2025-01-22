@@ -90,7 +90,7 @@ begin {
                 "IP"    = $fanGraphsPlayer.IP
                 "ERA"   = $fanGraphsPlayer.ERA
                 "WHIP"  = $fanGraphsPlayer.WHIP
-                "Wins" = $fanGraphsPlayer.W
+                "Win" = $fanGraphsPlayer.W
                 "Loss" = $fanGraphsPlayer.L
                 "Saves" = $fanGraphsPlayer.SV
                 "Holds" = $fanGraphsPlayer.HLD
@@ -146,7 +146,7 @@ process {
         }
 
         if ($position -eq "pitcher") {
-            $playerCollection | Select-Object Name, Position, MLBTeam, FantasyTeam, Age, "K/BB%", IP, ERA, WHIP | Sort-Object "K/BB%" -Descending | Export-Csv ./output/$outputFileName.csv -NoTypeInformation
+            $playerCollection | Select-Object Name, Position, MLBTeam, FantasyTeam, Age, "K/BB%", IP, ERA, WHIP, Win, Loss, Saves, Holds | Sort-Object "K/BB%" -Descending | Export-Csv ./output/$outputFileName.csv -NoTypeInformation
         }
         else {
             $playerCollection | Select-Object Name, Position, MLBTeam, FantasyTeam, Age, OPS, PA, Games, "K%", "BB%", Runs, RBIs, SB, CS, OBP, SLG | Sort-Object OBP -Descending | Export-Csv ./output/$outputFileName.csv -NoTypeInformation
