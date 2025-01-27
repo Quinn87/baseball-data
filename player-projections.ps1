@@ -54,7 +54,8 @@ function Select-fxTeam {
     } while (
         ($userInput -gt $teamList.count) -or ($userInput -le 0) -or ($userInput -eq "") 
     )
-    return $userInput
+    $teamId = $teamList[($userInput - 1)].teamId 
+    return $teamId
 }
     function Join-Files {
         param (
@@ -139,8 +140,6 @@ function Select-fxTeam {
     }
 
     try {
-
-
         #Gather Fantrax data from API
         $fxData = (Invoke-RestMethod -Uri $fantraxUrl -Method Get -ContentType 'application/json').rosters
         [array]$fxTeamIds = $fxData | Get-Member -MemberType NoteProperty | Select-Object -ExpandProperty Name
@@ -155,13 +154,18 @@ function Select-fxTeam {
             $i++
         }
 
-        #Ask user to select the team for comparison
-        #Team 1
-        $teamOne = Select-fxTeam $teamList
-        #Team 2
-        $teamTwo = Select-fxTeam $teamList
-        #Free Agent
-
+        #Ask user to select teams for comparison
+        $teamsSelection = [System.Collections.Generic.List[string]]::new()
+        $i = 1
+        do {
+            Write-Host "Select Team $i"
+            $teamId = Select-fxTeam $teamList
+            $teamsSelection.Add($teamId)
+            $i++
+            $userInput = Read-Host "Would you like to add another team?"
+        } while (
+           ( $userInput -eq "yes") -or ($userInput -eq "y")
+        )
     
         $playerImport = Join-Files $fileImportCount
 
