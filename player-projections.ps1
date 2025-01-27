@@ -20,6 +20,10 @@
     Additional information about the script.
 #>
 
+#TODO:
+# Choose Teams to compare
+# Selection for free agents to compare
+
 [CmdletBinding()]
 param (
     [Parameter(Mandatory = $true, HelpMessage = "How many player files will be imported?")]
@@ -32,6 +36,8 @@ param (
 )
 
 begin {
+    $fantraxUrl = "https://www.fantrax.com/fxea/general/getTeamRosters?leagueId=aczg2kyzm32ycqh6"
+
     function Get-PlayerPosition {
 
         Write-Host "Select Player Position for Comparison"
@@ -45,6 +51,7 @@ begin {
             ($userInput -gt 2) -or ($userInput -lt 0) -or ($userInput -eq "")
         )
     }
+
     function Join-Files {
         param (
             $fileImportCount
@@ -130,6 +137,10 @@ begin {
 
 process {
     try {
+
+        $fxData = (Invoke-RestMethod -Uri $fantraxUrl -Method Get -ContentType 'application/json').rosters
+        [array]$fxTeams = $fxData | Get-Member -MemberType NoteProperty | Select-Object -ExpandProperty Name
+    
         $playerImport = Join-Files $fileImportCount
 
         Write-Host "Pulling data from Fangraphs"
