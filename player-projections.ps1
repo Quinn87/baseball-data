@@ -40,7 +40,6 @@ function Get-PlayerPosition {
     )
     return $userInput
 }
-
 function Select-fxTeam {
     param (
         $teamList
@@ -50,7 +49,7 @@ function Select-fxTeam {
         Write-Host "$($team.optionNumber). $($Team.teamName)"
     }
     do {
-        $userInput = Read-Host "Selection"
+        [int]$userInput = Read-Host "Selection"
     } while (
         ($userInput -gt $teamList.count) -or ($userInput -le 0) -or ($userInput -eq "") 
     )
