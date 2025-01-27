@@ -49,6 +49,7 @@ function Select-fxTeam {
         Write-Host "$($team.optionNumber). $($Team.teamName)"
     }
     do {
+        Write-Host ""
         [int]$userInput = Read-Host "Selection"
     } while (
         ($userInput -gt $teamList.count) -or ($userInput -le 0) -or ($userInput -eq "") 
@@ -157,11 +158,13 @@ try {
     $teamsSelection = [System.Collections.Generic.List[string]]::new()
     $i = 1
     do {
-        Write-Host "Select Team $i"
+        Write-Host "Select Team $i" -ForegroundColor Red
         $teamId = Select-fxTeam $teamList
         $teamsSelection.Add($teamId)
         $i++
+        Write-host ""
         $userInput = Read-Host "Would you like to add another team?"
+        Write-host ""
     } while (
            ( $userInput -eq "yes") -or ($userInput -eq "y")
     )
