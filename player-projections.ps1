@@ -122,7 +122,6 @@ begin {
 
 process {
     try {
-
         $playerImport = Join-Files $fileImportCount
 
         Write-Host "Pulling data from Fangraphs"
