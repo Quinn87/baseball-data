@@ -58,30 +58,6 @@ function Select-fxTeam {
     $teamId = $teamList[($userInput - 1)].teamId 
     return $teamId
 }
-# function Join-Files {
-#     param (
-#         $fileImportCount
-#     )
-
-#     if ($fileImportCount -gt 0) {
-
-#         $filesToImport = [Collections.Generic.List[string]]::new()
-
-#         for ($i = 1; $i -le $fileImportCount; $i++) {
-#             do {
-#                 $fileToImport = Read-Host "Provide path to CSV to upload for file number $i"
-#             } while (
-#                 $fileToImport -notlike "*.csv"
-#             )
-#             $filesToImport.Add($fileToImport)
-#         }
-
-#         $playerList = foreach ($file in $filesToImport) { 
-#             Import-Csv $file
-#         }
-#     }
-#     return $playerList
-# }
 function Get-PlayerId {
     param (
         $player
@@ -180,8 +156,6 @@ try {
         #find players in fangraphs
     }
     
-    #$playerImport = Join-Files $fileImportCount
-
     Write-Host "Pulling data from Fangraphs"
     #fangraphs batters
     $battersUrl = 'https://www.fangraphs.com/api/projections?type=steamer&stats=bat&pos=all'
