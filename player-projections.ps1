@@ -31,12 +31,13 @@ function Get-PlayerPosition {
     Write-Host "Select Player Position for Comparison"
     Write-Host "1. Pitchers"
     Write-Host "2. Hitters"
+    Write-Host "3. Both"
 
     do {
         [int]$userInput = Read-Host "Selection"
     } 
     while (
-            ($userInput -gt 2) -or ($userInput -lt 0) -or ($userInput -eq "")
+            ($userInput -gt 3) -or ($userInput -lt 0) -or ($userInput -eq "")
     )
     return $userInput
 }
