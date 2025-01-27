@@ -57,35 +57,35 @@ function Select-fxTeam {
     $teamId = $teamList[($userInput - 1)].teamId 
     return $teamId
 }
-function Join-Files {
-    param (
-        $fileImportCount
-    )
+# function Join-Files {
+#     param (
+#         $fileImportCount
+#     )
 
-    if ($fileImportCount -gt 0) {
+#     if ($fileImportCount -gt 0) {
 
-        $filesToImport = [Collections.Generic.List[string]]::new()
+#         $filesToImport = [Collections.Generic.List[string]]::new()
 
-        for ($i = 1; $i -le $fileImportCount; $i++) {
-            do {
-                $fileToImport = Read-Host "Provide path to CSV to upload for file number $i"
-            } while (
-                $fileToImport -notlike "*.csv"
-            )
-            $filesToImport.Add($fileToImport)
-        }
+#         for ($i = 1; $i -le $fileImportCount; $i++) {
+#             do {
+#                 $fileToImport = Read-Host "Provide path to CSV to upload for file number $i"
+#             } while (
+#                 $fileToImport -notlike "*.csv"
+#             )
+#             $filesToImport.Add($fileToImport)
+#         }
 
-        $playerList = foreach ($file in $filesToImport) { 
-            Import-Csv $file
-        }
-    }
-    return $playerList
-}
+#         $playerList = foreach ($file in $filesToImport) { 
+#             Import-Csv $file
+#         }
+#     }
+#     return $playerList
+# }
 function Get-PlayerId {
     param (
         $player
     )
-    $fanGraphsPlayerID = ($playerMap | Where-Object { $_.FANTRAXID -eq $player.ID }).IDFANGRAPHS
+    $fanGraphsPlayerID = ($playerMap | Where-Object { $_.FANTRAXID -eq "*$player*" }).IDFANGRAPHS
     return $fanGraphsPlayerID
 }
 function Get-PlayerInfo {
@@ -103,7 +103,7 @@ function Get-PlayerInfo {
     }
     
     if ($position -eq "pitcher") {
-        $fanGraphsPlayer = $pitchers | Where-Object { $_.playerid -eq $playerId }
+        $fanGraphsPlayer = $pitchers | Where-Object { $_.playerid -eq $fgplayerId }
             
         $pitcherData = @{
             "K/BB%" = $fanGraphsPlayer."K-BB%"
@@ -119,7 +119,7 @@ function Get-PlayerInfo {
         $playerData = $baseData + $pitcherData
     }
     else {
-        $fanGraphsPlayer = $batters | Where-Object { $_.playerid -eq $playerId }
+        $fanGraphsPlayer = $batters | Where-Object { $_.playerid -eq $fgplayerId }
 
         $batterData = @{
             "OPS"   = $fanGraphsPlayer.OPS
@@ -155,12 +155,12 @@ try {
     }
 
     #Ask user to select teams for comparison
-    $teamsSelection = [System.Collections.Generic.List[string]]::new()
+    $fxTeamsSelection = [System.Collections.Generic.List[string]]::new()
     $i = 1
     do {
         Write-Host "Select Team $i" -ForegroundColor Red
         $teamId = Select-fxTeam $teamList
-        $teamsSelection.Add($teamId)
+        $fxTeamsSelection.Add($teamId)
         $i++
         Write-host ""
         $userInput = Read-Host "Would you like to add another team?"
@@ -168,8 +168,18 @@ try {
     } while (
            ( $userInput -eq "yes") -or ($userInput -eq "y")
     )
+
+    foreach ($fxTeam in $fxTeamsSelection) {
+        #Get team roster by player ID
+        $fxRoster = $fxData.$fxTeam.rosterItems
+
+        foreach ($fxPlayer in $fxRoster){
+            $fgPlayerId = Get-PlayerId $fxPlayer.id
+        }
+        #find players in fangraphs
+    }
     
-    $playerImport = Join-Files $fileImportCount
+    #$playerImport = Join-Files $fileImportCount
 
     Write-Host "Pulling data from Fangraphs"
     #fangraphs batters
@@ -186,7 +196,7 @@ try {
     Write-Host "Processing $position file"
     $playerCollection = [System.Collections.Generic.List[object]]::new()
     foreach ($player in $playerImport) {
-        $playerId = Get-PlayerId $player
+        $playerId = Get-PlayerId $player.id
         $playerInfo = Get-PlayerInfo $player $playerId
         $playerCollection.Add($playerInfo)
     }
