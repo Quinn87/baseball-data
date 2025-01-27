@@ -24,17 +24,6 @@
 # Choose Teams to compare
 # Selection for free agents to compare
 
-[CmdletBinding()]
-param (
-    [Parameter(Mandatory = $true, HelpMessage = "How many player files will be imported?")]
-    [ValidateNotNullOrEmpty()]
-    [Int]$fileImportCount,
-
-    [Parameter(Mandatory = $true, HelpMessage = "Provide a name for the outputted CSV.")]
-    [ValidateNotNullOrEmpty()]
-    [string]$outputFileName
-)
-
 begin {
     $fantraxUrl = "https://www.fantrax.com/fxea/general/getTeamRosters?leagueId=aczg2kyzm32ycqh6"
 
@@ -49,7 +38,8 @@ begin {
         } 
         while (
             ($userInput -gt 2) -or ($userInput -lt 0) -or ($userInput -eq "")
-        ) 
+        )
+        return $userInput
     }
 
 function Select-fxTeam {
