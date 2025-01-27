@@ -49,9 +49,24 @@ begin {
         } 
         while (
             ($userInput -gt 2) -or ($userInput -lt 0) -or ($userInput -eq "")
-        )
+        ) 
     }
 
+function Select-fxTeam {
+    param (
+        $teamList
+    )
+
+    foreach ($team in $teamList) {
+        Write-Host "$($team.optionNumber). $($Team.teamName)"
+    }
+    do {
+        $userInput = Read-Host "Selection"
+    } while (
+        ($userInput -gt $teamList.count) -or ($userInput -le 0) -or ($userInput -eq "") 
+    )
+    return $userInput
+}
     function Join-Files {
         param (
             $fileImportCount
@@ -138,8 +153,28 @@ begin {
 process {
     try {
 
+
+        #Gather Fantrax data from API
         $fxData = (Invoke-RestMethod -Uri $fantraxUrl -Method Get -ContentType 'application/json').rosters
-        [array]$fxTeams = $fxData | Get-Member -MemberType NoteProperty | Select-Object -ExpandProperty Name
+        [array]$fxTeamIds = $fxData | Get-Member -MemberType NoteProperty | Select-Object -ExpandProperty Name
+
+        $i = 1
+        $teamList = foreach ($fxTeamId in $fxTeamIds) {
+            [PSCustomObject]@{
+                optionNumber = $i
+                teamId = $fxTeamId
+                teamName = $fxData.$fxTeamId.teamName
+            }
+            $i++
+        }
+
+        #Ask user to select the team for comparison
+        #Team 1
+        $teamOne = Select-fxTeam $teamList
+        #Team 2
+        $teamTwo = Select-fxTeam $teamList
+        #Free Agent
+
     
         $playerImport = Join-Files $fileImportCount
 
