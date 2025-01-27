@@ -22,11 +22,6 @@
 
 [CmdletBinding()]
 param (
-    [Parameter(Mandatory = $true, HelpMessage = "Provide the player position: Pitcher or Batter")]
-    [ValidateNotNullOrEmpty()]
-    [ValidateSet("Pitcher", "Batter")]
-    [string]$position,
-
     [Parameter(Mandatory = $true, HelpMessage = "How many player files will be imported?")]
     [ValidateNotNullOrEmpty()]
     [Int]$fileImportCount,
@@ -37,6 +32,19 @@ param (
 )
 
 begin {
+    function Get-PlayerPosition {
+
+        Write-Host "Select Player Position for Comparison"
+        Write-Host "1. Pitchers"
+        Write-Host "2. Hitters"
+
+        do {
+            [int]$userInput = Read-Host "Selection"
+        } 
+        while (
+            ($userInput -gt 2) -or ($userInput -lt 0) -or ($userInput -eq "")
+        )
+    }
     function Join-Files {
         param (
             $fileImportCount
