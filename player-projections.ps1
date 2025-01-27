@@ -24,7 +24,6 @@
 # Choose Teams to compare
 # Selection for free agents to compare
 
-begin {
     $fantraxUrl = "https://www.fantrax.com/fxea/general/getTeamRosters?leagueId=aczg2kyzm32ycqh6"
 
     function Get-PlayerPosition {
@@ -138,9 +137,7 @@ function Select-fxTeam {
         }
         return New-Object PSObject -Property $playerData
     }
-}
 
-process {
     try {
 
 
@@ -198,4 +195,3 @@ process {
     catch {
         $_.Exception.Message
     }
-}
