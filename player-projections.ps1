@@ -24,8 +24,6 @@
 # Choose Teams to compare
 # Selection for free agents to compare
 
-$fantraxUrl = "https://www.fantrax.com/fxea/general/getTeamRosters?leagueId=aczg2kyzm32ycqh6"
-
 function Get-PlayerPosition {
 
     Write-Host "Select Player Position for Comparison"
@@ -116,7 +114,24 @@ function Get-PlayerInfo {
     return New-Object PSObject -Property $playerData
 }
 
+function Get-PitcherData {
+    param (
+        $playerId
+    )
+    
+}
+function Get-HitterData {
+    param (
+        $playerId
+    )
+    
+}
 try {
+
+    #Add League Id
+    $leagueId = Read-Host "Enter Fantrax League ID"
+    $fantraxUrl = "https://www.fantrax.com/fxea/general/getTeamRosters?leagueId=$leagueId"
+
     #Gather Fantrax data from API
     $fxData = (Invoke-RestMethod -Uri $fantraxUrl -Method Get -ContentType 'application/json').rosters
     [array]$fxTeamIds = $fxData | Get-Member -MemberType NoteProperty | Select-Object -ExpandProperty Name
@@ -150,10 +165,10 @@ try {
         #Get team roster by player ID
         $fxRoster = $fxData.$fxTeam.rosterItems
 
-        foreach ($fxPlayer in $fxRoster){
+        foreach ($fxPlayer in $fxRoster) {
             $fgPlayerId = Get-PlayerId $fxPlayer.id
+
         }
-        #find players in fangraphs
     }
     
     Write-Host "Pulling data from Fangraphs"
