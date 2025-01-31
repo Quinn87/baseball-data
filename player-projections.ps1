@@ -137,6 +137,18 @@ try {
 
     if ($fxData) {
         [array]$fxTeamIds = $fxData | Get-Member -MemberType NoteProperty | Select-Object -ExpandProperty Name
+
+        Write-Host "Pulling data from Fangraphs"
+        #fangraphs batters
+        $battersUrl = 'https://www.fangraphs.com/api/projections?type=steamer&stats=bat&pos=all'
+        $global:batters = Invoke-RestMethod -Uri $battersUrl -Method Get
+    
+        #fangraphs pitchers
+        $pitchersUrl = 'https://www.fangraphs.com/api/projections?type=steamer&stats=pit&pos=all'
+        $global:pitchers = Invoke-RestMethod -Uri $pitchersUrl -Method Get
+    
+        #playerMap
+        $playerMap = Import-Csv -Path playerMap.csv    
     }
     else {
         Write-Host "League not found"
@@ -178,18 +190,6 @@ try {
             $playerCollection.Add($playerInfo)
         }
     }
-    
-    Write-Host "Pulling data from Fangraphs"
-    #fangraphs batters
-    $battersUrl = 'https://www.fangraphs.com/api/projections?type=steamer&stats=bat&pos=all'
-    $global:batters = Invoke-RestMethod -Uri $battersUrl -Method Get
-
-    #fangraphs pitchers
-    $pitchersUrl = 'https://www.fangraphs.com/api/projections?type=steamer&stats=pit&pos=all'
-    $global:pitchers = Invoke-RestMethod -Uri $pitchersUrl -Method Get
-
-    #playerMap
-    $playerMap = Import-Csv -Path playerMap.csv
 
     Write-Host "Processing $position file"
     $playerCollection = [System.Collections.Generic.List[object]]::new()
