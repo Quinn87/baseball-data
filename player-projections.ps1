@@ -134,7 +134,14 @@ try {
 
     #Gather Fantrax data from API
     $fxData = (Invoke-RestMethod -Uri $fantraxUrl -Method Get -ContentType 'application/json').rosters
-    [array]$fxTeamIds = $fxData | Get-Member -MemberType NoteProperty | Select-Object -ExpandProperty Name
+
+    if ($fxData) {
+        [array]$fxTeamIds = $fxData | Get-Member -MemberType NoteProperty | Select-Object -ExpandProperty Name
+    }
+    else {
+        Write-Host "League not found"
+        exit
+    }
 
     $i = 1
     $teamList = foreach ($fxTeamId in $fxTeamIds) {
@@ -167,7 +174,8 @@ try {
 
         foreach ($fxPlayer in $fxRoster) {
             $fgPlayerId = Get-PlayerId $fxPlayer.id
-
+            $playerInfo = Get-PlayerInfo $fgPlayerId
+            $playerCollection.Add($playerInfo)
         }
     }
     
