@@ -60,8 +60,13 @@ function Get-PlayerId {
     param (
         $player
     )
-    $fanGraphsPlayerID = ($playerMap | Where-Object { $_.FANTRAXID -eq "*$player*" }).IDFANGRAPHS
-    return $fanGraphsPlayerID
+
+    [PSCustomObject]$playerId = @{
+        fanGraphsPlayerID = ($playerMap | Where-Object { $_.FANTRAXID -eq "*$player*" }).IDFANGRAPHS
+        mlbPlayerId = ($playerMap | Where-Object { $_.FANTRAXID -eq "*$player*" }).MLBID
+    }
+    
+    return $playerId
 }
 function Get-PlayerInfo {
     param (
@@ -78,7 +83,7 @@ function Get-PlayerInfo {
     }
     
     if ($position -eq "pitcher") {
-        $fanGraphsPlayer = $pitchers | Where-Object { $_.playerid -eq $fgplayerId }
+        $fanGraphsPlayer = $pitchers | Where-Object { $_.playerid -eq $playerId }
             
         $pitcherData = @{
             "K/BB%" = $fanGraphsPlayer."K-BB%"
@@ -94,7 +99,7 @@ function Get-PlayerInfo {
         $playerData = $baseData + $pitcherData
     }
     else {
-        $fanGraphsPlayer = $batters | Where-Object { $_.playerid -eq $fgplayerId }
+        $fanGraphsPlayer = $batters | Where-Object { $_.playerid -eq $playerId }
 
         $batterData = @{
             "OPS"   = $fanGraphsPlayer.OPS
@@ -116,9 +121,21 @@ function Get-PlayerInfo {
 
 function Get-PitcherData {
     param (
-        $playerId
+        $player
     )
     
+    $fanGraphsPlayer = $pitchers | Where-Object { $_.playerid -eq $player.id }
+            
+        $pitcherData = @{
+            "K/BB%" = $fanGraphsPlayer."K-BB%"
+            "IP"    = $fanGraphsPlayer.IP
+            "ERA"   = $fanGraphsPlayer.ERA
+            "WHIP"  = $fanGraphsPlayer.WHIP
+            "Win"   = $fanGraphsPlayer.W
+            "Loss"  = $fanGraphsPlayer.L
+            "Saves" = $fanGraphsPlayer.SV
+            "Holds" = $fanGraphsPlayer.HLD
+        }
 }
 function Get-HitterData {
     param (
@@ -185,8 +202,15 @@ try {
         $fxRoster = $fxData.$fxTeam.rosterItems
 
         foreach ($fxPlayer in $fxRoster) {
-            $fgPlayerId = Get-PlayerId $fxPlayer.id
-            $playerInfo = Get-PlayerInfo $fgPlayerId
+            $fxPlayer.id = Get-PlayerId $fxPlayer.id
+
+            if (($fxPlayer.position -eq "SP") -or ($fxPlayer.position -eq "RP")) {
+                $playerInfo = Get-PitcherData $fxPlayer
+            }
+            else {
+                $playerInfo = Get-HitterData $fxPlayer
+            }
+
             $playerCollection.Add($playerInfo)
         }
     }
@@ -195,7 +219,7 @@ try {
     $playerCollection = [System.Collections.Generic.List[object]]::new()
     foreach ($player in $playerImport) {
         $playerId = Get-PlayerId $player.id
-        $playerInfo = Get-PlayerInfo $player $playerId
+        $playerInfo = Get-PlayerInfo $playerId
         $playerCollection.Add($playerInfo)
     }
 
