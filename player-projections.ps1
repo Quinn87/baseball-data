@@ -56,18 +56,6 @@ function Select-fxTeam {
     $teamId = $teamList[($userInput - 1)].teamId 
     return $teamId
 }
-function Get-PlayerId {
-    param (
-        $player
-    )
-
-    [PSCustomObject]$playerId = @{
-        fanGraphsPlayerID = ($playerMap | Where-Object { $_.FANTRAXID -eq "*$player*" }).IDFANGRAPHS
-        mlbPlayerId = ($playerMap | Where-Object { $_.FANTRAXID -eq "*$player*" }).MLBID
-    }
-    
-    return $playerId
-}
 function Get-PlayerInfo {
     param (
         $player,
@@ -202,13 +190,13 @@ try {
         $fxRoster = $fxData.$fxTeam.rosterItems
 
         foreach ($fxPlayer in $fxRoster) {
-            $fxPlayer.id = Get-PlayerId $fxPlayer.id
+            $playerId = $playerMap | Where-Object { $_.FANTRAXID -eq "*$($fxPlayer.id)*" } | Select-Object IDFANGRAPHS, MLBID
 
             if (($fxPlayer.position -eq "SP") -or ($fxPlayer.position -eq "RP")) {
-                $playerInfo = Get-PitcherData $fxPlayer
+                $playerInfo = Get-PitcherData $playerId
             }
             else {
-                $playerInfo = Get-HitterData $fxPlayer
+                $playerInfo = Get-HitterData $playerId
             }
 
             $playerCollection.Add($playerInfo)
