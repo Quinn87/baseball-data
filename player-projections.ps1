@@ -107,6 +107,24 @@ function Get-PlayerInfo {
     return New-Object PSObject -Property $playerData
 }
 
+function Get-PlayerInfo {
+    param (
+        $mlbId
+    )
+
+    $mlbUrl = "https://statsapi.mlb.com/api/v1/people/$mlbId"
+
+    $mlbResponse = (Invoke-RestMethod -Uri $mlbUrl -Method Get).people
+    
+    [PSCustomObject]$playerInfo = @{
+        Name     = $mlbResponse.fullName
+        Position = $mlbResponse.primaryPosition.abbreviation
+        Age      = $mlbResponse.currentAge
+    }
+
+    return $playerInfo
+}
+
 function Get-PitcherData {
     param (
         $player
@@ -114,16 +132,18 @@ function Get-PitcherData {
     
     $fanGraphsPlayer = $pitchers | Where-Object { $_.playerid -eq $player.id }
             
-        $pitcherData = @{
-            "K/BB%" = $fanGraphsPlayer."K-BB%"
-            "IP"    = $fanGraphsPlayer.IP
-            "ERA"   = $fanGraphsPlayer.ERA
-            "WHIP"  = $fanGraphsPlayer.WHIP
-            "Win"   = $fanGraphsPlayer.W
-            "Loss"  = $fanGraphsPlayer.L
-            "Saves" = $fanGraphsPlayer.SV
-            "Holds" = $fanGraphsPlayer.HLD
-        }
+    $pitcherData = @{
+        "K/BB%" = $fanGraphsPlayer."K-BB%"
+        "IP"    = $fanGraphsPlayer.IP
+        "ERA"   = $fanGraphsPlayer.ERA
+        "WHIP"  = $fanGraphsPlayer.WHIP
+        "Win"   = $fanGraphsPlayer.W
+        "Loss"  = $fanGraphsPlayer.L
+        "Saves" = $fanGraphsPlayer.SV
+        "Holds" = $fanGraphsPlayer.HLD
+    }
+
+    return $pitcherData
 }
 function Get-HitterData {
     param (
@@ -185,6 +205,9 @@ try {
            ( $userInput -eq "yes") -or ($userInput -eq "y")
     )
 
+    $pitcherList = [System.Collections.Generic.List[string]]::new()
+    $hitterList = [System.Collections.Generic.List[string]]::new()
+
     foreach ($fxTeam in $fxTeamsSelection) {
         #Get team roster by player ID
         $fxRoster = $fxData.$fxTeam.rosterItems
@@ -192,11 +215,15 @@ try {
         foreach ($fxPlayer in $fxRoster) {
             $playerId = $playerMap | Where-Object { $_.FANTRAXID -eq "*$($fxPlayer.id)*" } | Select-Object IDFANGRAPHS, MLBID
 
+            $baseData = Get-PlayerInfo $playerId.MLBID
+
             if (($fxPlayer.position -eq "SP") -or ($fxPlayer.position -eq "RP")) {
-                $playerInfo = Get-PitcherData $playerId
+                $pitcherData = Get-PitcherData $playerId.IDFANGRAPHS
+                $playerInfo = $baseData + $playerInfo
             }
             else {
-                $playerInfo = Get-HitterData $playerId
+                $hitterData = Get-HitterData $playerId.IDFANGRAPHS
+                $playerInfo = $baseData + $hitterData
             }
 
             $playerCollection.Add($playerInfo)
