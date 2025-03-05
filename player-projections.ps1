@@ -147,9 +147,24 @@ function Get-PitcherData {
 }
 function Get-HitterData {
     param (
-        $playerId
+        $player
     )
+
+    $fanGraphsPlayer = $pitchers | Where-Object { $_.playerid -eq $player.id }
     
+    $hitterData = @{
+        "OPS"   = $fanGraphsPlayer.OPS
+        "PA"    = $fanGraphsPlayer.PA
+        "Games" = $fanGraphsPlayer.G
+        "K%"    = $fanGraphsPlayer."K%"
+        "BB%"   = $fanGraphsPlayer."BB%"
+        "Runs"  = $fanGraphsPlayer.R
+        "RBIs"  = $fanGraphsPlayer.RBI
+        "SB"    = $fanGraphsPlayer.SB
+        "CS"    = $fanGraphsPlayer.CS
+        "OBP"   = $fanGraphsPlayer.OBP
+        "SLG"   = $fanGraphsPlayer.SLG
+    }
 }
 try {
 
@@ -229,6 +244,8 @@ try {
             $playerCollection.Add($playerInfo)
         }
     }
+
+    ### Old Code
 
     Write-Host "Processing $position file"
     $playerCollection = [System.Collections.Generic.List[object]]::new()
