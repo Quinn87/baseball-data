@@ -90,8 +90,8 @@ begin {
                 "IP"    = $fanGraphsPlayer.IP
                 "ERA"   = $fanGraphsPlayer.ERA
                 "WHIP"  = $fanGraphsPlayer.WHIP
-                "Win" = $fanGraphsPlayer.W
-                "Loss" = $fanGraphsPlayer.L
+                "Win"   = $fanGraphsPlayer.W
+                "Loss"  = $fanGraphsPlayer.L
                 "Saves" = $fanGraphsPlayer.SV
                 "Holds" = $fanGraphsPlayer.HLD
             }
@@ -127,11 +127,11 @@ process {
 
         Write-Host "Pulling data from Fangraphs"
         #fangraphs batters
-        $battersUrl = 'https://www.fangraphs.com/api/projections?type=steamer&stats=bat&pos=all'
+        $battersUrl = 'https://www.fangraphs.com/api/projections?type=thebatx&stats=bat&pos=all'
         $global:batters = Invoke-RestMethod -Uri $battersUrl -Method Get
 
         #fangraphs pitchers
-        $pitchersUrl = 'https://www.fangraphs.com/api/projections?type=steamer&stats=pit&pos=all'
+        $pitchersUrl = 'https://www.fangraphs.com/api/projections?type=atc&stats=pit&pos=all'
         $global:pitchers = Invoke-RestMethod -Uri $pitchersUrl -Method Get
 
         #playerMap
